@@ -8,6 +8,9 @@ class InputInterface:
         self.__logger = logger
 
     def _choose_from(self, choices: dict):
+
+        normalized_choices = {k.lower(): (k, v) for k, v in choices.items()}
+
         if not choices:
             return {}
 
@@ -15,8 +18,13 @@ class InputInterface:
             return choices
 
         nl = "\n"
-        choice = self.__input(f"{nl}Choose from: {nl.join(str(k) for k in sorted(choices.keys()))}")
-        eligible = {k: v for k, v in choices.items() if choice.lower() in k.lower()}
+        choice = self.__input(f"{nl}Choose from: {nl.join(str(k) for k in sorted(choices.keys()))}{nl}{nl}> ")
+        try:
+            k, v = normalized_choices[choice]
+
+            eligible = {k: v}
+        except KeyError:
+            eligible = {k: v for k, v in choices.items() if choice.lower() in k.lower()}
         return self._choose_from(eligible)
 
     def choose_from(self, choices: dict):
@@ -31,5 +39,5 @@ class InputInterface:
 
     def ask_for_consent(self, msg: str):
 
-        decision = self.__input(f"{msg} (Y/n)")
+        decision = self.__input(f"{msg} (Y/n) ")
         return decision.strip().lower() in {"y", "", "yes"}

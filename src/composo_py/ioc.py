@@ -127,4 +127,5 @@ class Plugin(containers.DeclarativeContainer):
                                year=System.year,
                                sys_interface=System.sys_interface,
                                input_interface=System.input_interface,
-                               github_name=Config.config.github_name)
+                               github_name=Config.config.github_name,
+                               email=Config.config.email)

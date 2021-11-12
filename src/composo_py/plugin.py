@@ -31,7 +31,7 @@ def git(*args):
 
 class ComposoPythonPlugin:
 
-    def __init__(self, sys_interface, input_interface, verse, project_name_factory, year, author, github_name):
+    def __init__(self, sys_interface, input_interface, verse, project_name_factory, year, author, github_name, email):
         self.__sys_interface = sys_interface
         self.__verse = verse
         self.__project_name_factory = project_name_factory
@@ -39,6 +39,7 @@ class ComposoPythonPlugin:
         self.__author = author
         self.__github_name = github_name
         self.__input_interface = input_interface
+        self.__email = email
 
     def new(self, name, flavour="tool", license="mit", vcs="git"):
 
@@ -69,15 +70,24 @@ class ComposoPythonPlugin:
             choice = eligible_licenses[0]
 
         license_specifier = f"OSI Approved :: {choice['licenseId']} License" if choice["isOsiApproved"] else f"{choice['licenseId']} License"
+        # license = requests.get(f"https://raw.githubusercontent.com/spdx/license-list-data/master/text/{choice['licenseId']}.txt").text
+        # license = license.replace("YEAR", str(self.__year)) \
+        #     .replace("AUTHOR", str(self.__author)) \
+        #     .replace("EMAIL", str(self.__email)) \
+        #     .replace("<COPYRIGHT HOLDER>", str(self.__author)) \
 
-        license = requests.get(f"https://raw.githubusercontent.com/licenses/license-templates/master/templates/{license}.txt").text
+        license_response = requests.get(f"https://raw.githubusercontent.com/licenses/license-templates/master/templates/{license}.txt")
+        if license_response.status_code == 404:
+            nl = "\n"
+            license_text = f"Copyright {self.__year} by {self.__author}{nl}{nl}LICENSE template for {choice['licenseId']} not found, please provide a proper license file"
+        else:
+            license_text = license_response.text
 
-
-        license = license.replace("{{ year }}", str(self.__year))\
-            .replace("{{ organization }}", str(self.__author))\
-            .replace("{{ project }}", str(name.project))
+        license_text = license_text.replace("{{ year }}", str(self.__year))\
+             .replace("{{ organization }}", str(self.__author))\
+             .replace("{{ project }}", str(name.project))
         self.__sys_interface.write(proj_path / "README.md", f"# {name.project}")
-        self.__sys_interface.write(proj_path / "LICENSE.txt", license)
+        self.__sys_interface.write(proj_path / "LICENSE.txt", license_text)
 
         ## TESTS
 
