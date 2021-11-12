@@ -4,9 +4,58 @@ from importlib.metadata import entry_points
 import dependency_injector.providers as providers
 import dependency_injector.containers as containers
 
+from composo_py.input import InputInterface
 from composo_py.plugin import ComposoPythonPlugin, ProjectName
 from composo_py.files import AppPy, MainPy, IocPy, SetupPy, SetupCfg, ToxIni, PyProjectToml, ManifestIn
 from composo_py.system import DrySysInterface, RealSysInterface
+import logging.config
+
+
+logging_conf = {
+    "version": 1,
+    "formatters": {
+        "simple": {
+            "format": '%(message)s'
+        },
+        "advanced": {
+            "format": '%(levelname)-8s at %(pathname)s:%(lineno)d %(message)s'
+        }
+    },
+    "handlers": {
+        "debugging": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",
+            "formatter": "simple",
+            "stream": "ext://sys.stdout",
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "simple",
+            "stream": "ext://sys.stdout",
+        }
+
+    },
+    "loggers": {
+        "simpleExample": {
+            "level": "DEBUG",
+            "handlers": ["console"],
+            "propagate": "no"
+        },
+        "InputInterface": {
+            "level": "INFO",
+            "handlers": ["console"],
+            "propagate": "no"
+        }
+
+    },
+    "root": {
+        "level": "DEBUG",
+        "handlers": ["console"]
+    }
+}
+
+logging.config.dictConfig(logging_conf)
 
 
 DEFAULT_CONFIG = {
@@ -63,6 +112,9 @@ class System(containers.DeclarativeContainer):
         false=real_sys_interface,
         true=dry_sys_interface
     )
+    input_interface = providers.Factory(InputInterface,
+                                        _input=providers.DelegatedCallable(input),
+                                        logger=providers.Callable(logging.getLogger, InputInterface.__name__))
 
     year = providers.Callable(get_year)
 
@@ -74,4 +126,5 @@ class Plugin(containers.DeclarativeContainer):
                                author=Config.config.author,
                                year=System.year,
                                sys_interface=System.sys_interface,
+                               input_interface=System.input_interface,
                                github_name=Config.config.github_name)
