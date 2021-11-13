@@ -12,6 +12,21 @@ TEST_CONFIG = {
             "class": "TestApp",
             "package": "test_app",
             "project": "test-app"
+        },
+        "license": {
+            "isOsiApproved": True,
+            "licenseId": "MIT"
+        }
+    },
+    "author": {
+        "name": "A. Random Developer",
+        "email": "a.random@email.com",
+    },
+    "vcs": {
+        "git": {
+            "github": {
+                "name": "Arand"
+            }
         }
     }
 }
@@ -41,3 +56,6 @@ class TestLiquidTemplateRenderer:
 
     def test_render_plugin(self):
         self._test_render("plugin.py")
+
+    def test_render_setup(self):
+        self._test_render("setup.py")
