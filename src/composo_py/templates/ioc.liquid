@@ -1,12 +1,12 @@
 import dependency_injector.providers as providers
 import dependency_injector.containers as containers
 
-{% if flavour.plugin_system %}
+{% if app.flavour contains "plugin_system" %}
 from importlib.metadata import entry_points
-from {{ name.package }}.default.plugin import DefaultPlugin
+from {{ app.name.package }}.default.plugin import DefaultPlugin
 {% endif %}
 
-from {{ name.package }}.app import {{ name.class }}
+from {{ app.name.package }}.app import {{ app.name.class }}
 import logging.config
 
 logging_conf = {
@@ -25,7 +25,7 @@ logging_conf = {
         }
     },
     "loggers": {
-        "{{ name.class }}": {
+        "{{ app.name.class }}": {
             "level": "DEBUG",
             "handlers": ["console"],
             "propagate": "no"
@@ -41,7 +41,7 @@ logging.config.dictConfig(logging_conf)
 
 
 DEFAULT_CONFIG = {
-    "appname": "{{ name.project }}"
+    "appname": "{{ app.name.project }}"
 }
 
 
@@ -54,24 +54,24 @@ class Config(containers.DeclarativeContainer):
 class Utils(containers.DeclarativeContainer):
     print = providers.Callable(print)
 
-{% if flavour.plugin %}
+{% if app.flavour contains "plugin" %}
 class Plugin(containers.DeclarativeContainer):
-    plugin = providers.Factory({{ name.class }}Plugin,
-                              plugin_name={{ name.package }},
+    plugin = providers.Factory({{ app.name.class }}Plugin,
+                              plugin_name={{ app.name.package }},
                               print=Utils.print,
                               logger=providers.Callable(
                                 logging.getLogger,
-                                {{ name.class }}.__name__)
+                                {{ app.name.class }}.__name__)
                               )
 {% endif %}
 
 class App(containers.DeclarativeContainer):
 
-    app = providers.Factory({{ name.class }},
-                            appname=Config.config.appname, 
+    app = providers.Factory({{ app.name.class }},
+                            appname=Config.config.appname,
                             print=Utils.print,
                             logger=providers.Callable(
                                 logging.getLogger,
-                                {{ name.class }}.__name__
+                                {{ app.name.class }}.__name__
                             )
-                            {% if flavour.plugin_system %},plugins=Plugins.discovered_plugins{% endif %})
+                            {% if app.flavour contains "plugin_system" %},plugins=Plugins.discovered_plugins{% endif %})

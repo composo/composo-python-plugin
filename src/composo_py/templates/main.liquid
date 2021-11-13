@@ -1,39 +1,40 @@
+{% if app.flavour contains "tool" -%}
 import fire
-from {{ name.package }} import ioc
+{% endif -%}
+from {{ app.name.package }} import ioc
 from appdirs import user_config_dir
 from pathlib import Path
 
+{% if app.flavour contains "standalone" %}
 def main():
-    conf_dir = Path(user_config_dir("{{ name.project }}"))
+    conf_dir = Path(user_config_dir("{{ app.name.project }}"))
     ioc.Config.config.from_yaml(conf_dir / "config.yaml")
 
     app = ioc.App.app()
-{% if flavour.tool %}
+    {% if app.flavour contains "tool" -%}
     fire.Fire(app)
-{% endif %}
-{% if flavour.plugin %}
+    {% endif -%}
+{% endif -%}
+
+{% if app.flavour contains "plugin" %}
 def init(config):
     ioc.Config.config.from_dict(config)
     app = ioc.Plugin.plugin()
     return app
-{% endif %}
 
-def test():
+def test_plugin():
     app = ioc.Plugin.plugin()
     app.run("test")
+{% endif -%}
 
-
-if __name__ == "__main__":
-    test()
-
-
+{% if app.flavour contains "standalone" %}
 def test():
-    conf_dir = Path(user_config_dir("__PROJECT_NAME__"))
+    conf_dir = Path(user_config_dir("{{ app.name.project }}"))
     ioc.Config.from_yaml(conf_dir / "config.yaml")
 
     app = ioc.App.app()
     app.run("World")
-
-
+{% endif %}
 if __name__ == "__main__":
-    test()
+    {% if app.flavour contains "plugin" %}test_plugin(){% endif -%}
+    {% if app.flavour contains "standalone" %}test(){% endif -%}

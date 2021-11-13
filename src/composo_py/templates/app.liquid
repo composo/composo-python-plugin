@@ -1,4 +1,4 @@
-class {{ class_name }}:
+class {{ app.name.class }}:
 {% comment %} Main class for app {% endcomment %}
     def __init__(self, appname, print, logger):
         self.__appname = appname
@@ -6,7 +6,8 @@ class {{ class_name }}:
         self.__logger = logger
         self.__logger.debug(f"{type(self).__name__} initialized")
 
-{% if flavour.plugin_system %}
+{%- if app.flavour contains "plugin_system" %}
+
    def run(self, name, plugin: str = "default", **kwargs):
         try:
             plugin = self.__plugins[plugin].load().init(config)
@@ -16,8 +17,8 @@ class {{ class_name }}:
             print(f"no plugin {plugin} found, available plugins are: {[k for k, _ in self.__plugins.items()]}")
 
         self.__print(f"Hello {name} from {self.__appname}")
-{% else %}
+{%- else %}
+
     def run(self, name):
         self.__print(f"Hello {name} from {self.__appname}")
-{% endif %}
-
+{%- endif -%}
