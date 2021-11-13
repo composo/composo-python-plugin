@@ -1,0 +1,39 @@
+import fire
+from {{ name.package }} import ioc
+from appdirs import user_config_dir
+from pathlib import Path
+
+def main():
+    conf_dir = Path(user_config_dir("{{ name.project }}"))
+    ioc.Config.config.from_yaml(conf_dir / "config.yaml")
+
+    app = ioc.App.app()
+{% if flavour.tool %}
+    fire.Fire(app)
+{% endif %}
+{% if flavour.plugin %}
+def init(config):
+    ioc.Config.config.from_dict(config)
+    app = ioc.Plugin.plugin()
+    return app
+{% endif %}
+
+def test():
+    app = ioc.Plugin.plugin()
+    app.run("test")
+
+
+if __name__ == "__main__":
+    test()
+
+
+def test():
+    conf_dir = Path(user_config_dir("__PROJECT_NAME__"))
+    ioc.Config.from_yaml(conf_dir / "config.yaml")
+
+    app = ioc.App.app()
+    app.run("World")
+
+
+if __name__ == "__main__":
+    test()

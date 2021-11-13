@@ -49,10 +49,6 @@ class Config(containers.DeclarativeContainer):
     config.override(DEFAULT_CONFIG)
 
 
-# class Plugins(containers.DeclarativeContainer):
-#     discovered_plugins = providers.Callable(lambda name: {{ep.name: ep for ep in entry_points()[name]}},
-#                                             '{self.__name.package}.plugins')
-
 class Utils(containers.DeclarativeContainer):
     print = providers.Callable(print)
 

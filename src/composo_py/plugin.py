@@ -41,7 +41,7 @@ class ComposoPythonPlugin:
         self.__input_interface = input_interface
         self.__email = email
 
-    def new(self, name, flavour="tool", license="mit", vcs="git"):
+    def new(self, name, flavour="tool,plugin-system,plugin:some-app", license="mit", vcs="git"):
 
         name = self.__project_name_factory(name)
 
@@ -104,12 +104,28 @@ class MockPrinter:
         self.printed = msg
 
 
+class MockLogger:
+    def __init__(self):
+        self.msgs = []
+    def debug(self, msg):
+        self.msgs.append(("DEBUG", msg))
+    def warning(self, msg):
+        self.msgs.append(("WARNING", msg))
+    def warn(self, msg):
+        self.warning(msg)
+    def info(self, msg):
+        self.msgs.append(("INFO", msg))
+    def error(self, msg):
+        self.msgs.append(("ERROR", msg))
+        
+
 class Test{name.cls}:
     def test_new(self):
         mock_printer = MockPrinter()
-        app = {name.cls}("{name.project}", mock_printer.print)
+        mock_logger = MockLogger()
+        app = {name.cls}("{name.project}", mock_printer.print, mock_logger)
         app.run("{self.__author}") 
-        
+        assert mock_logger.msgs[0] == "{name.cls} initialized"
         assert mock_printer.printed == f"Hello {self.__author} from {name.project}"
 """)
 
@@ -119,13 +135,13 @@ class Test{name.cls}:
         setup_py = self.__verse("setup_py", proj_name=name, flavour=flavour, license_specifier=license_specifier)
         self.__sys_interface.write(proj_path / "setup.py", setup_py.content)
 
-        ioc_py = self.__verse("ioc_py", name=name)
+        ioc_py = self.__verse("ioc_py", name=name, flavour=flavour)
         self.__sys_interface.write(package_path / "ioc.py", ioc_py.content)
 
         main_py = self.__verse("main_py", name=name, flavour=flavour)
         self.__sys_interface.write(package_path / "main.py", main_py.content)
 
-        app_py = self.__verse("app_py", name=name)
+        app_py = self.__verse("app_py", name=name, flavour=flavour)
         self.__sys_interface.write(package_path / "app.py", app_py.content)
 
         setup_cfg = self.__verse("setup_cfg")

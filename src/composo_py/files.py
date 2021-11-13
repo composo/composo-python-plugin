@@ -104,21 +104,33 @@ license_files = LICENSE.txt
 
 class AppPy:
 
-    def __init__(self, name):
+    def __init__(self, name, flavour, template_getter):
         self.__name = name
+        self.__flavour = flavour
+        self.__template_getter = template_getter
 
     @property
     def content(self):
-        return f"""
-class {self.__name.cls}:
 
-    def __init__(self, appname, print):
-        self.__appname = appname
-        self.__print = print
+        if "plugin-system" in self.__flavour:
+            template = self.__template_getter("app.plugin-system.py")
+        elif "plugin:" in self.__flavour:
+            template = self.__template_getter("app.plugin.py")
+        else:
+            template = self.__template_getter("app.py")
 
-    def run(self, name):
-        self.__print(f"Hello {{name}} from {{self.__appname}}")
-"""
+        return template.replace("__CLASS_NAME__", self.__name.cls)
+
+#         return f"""
+# class {self.__name.cls}:
+#
+#     def __init__(self, appname, print):
+#         self.__appname = appname
+#         self.__print = print
+#
+#     def run(self, name):
+#         self.__print(f"Hello {{name}} from {{self.__appname}}")
+# """
 
 
 class MainPy:
@@ -153,7 +165,7 @@ def test():
 
 if __name__ == "__main__":
     test()
-""" if self.__flavour == "tool" else """
+""" if "tool" in self.__flavour else """
 if __name__ == "__main__":
     main()
 """
@@ -161,8 +173,9 @@ if __name__ == "__main__":
 
 class IocPy:
 
-    def __init__(self, name):
+    def __init__(self, name, flavour):
         self.__name = name
+        self.__flavour = flavour
 
     @property
     def content(self):
@@ -183,20 +196,20 @@ class Config(containers.DeclarativeContainer):
 
     config = providers.Configuration("config")
     config.override(DEFAULT_CONFIG)
-
+"""+f"""
 
 # class Plugins(containers.DeclarativeContainer):
 #     discovered_plugins = providers.Callable(lambda name: {{ep.name: ep for ep in entry_points()[name]}},
 #                                             '{self.__name.package}.plugins')
-
+"""if "plugin-system" in self.__flavour else "" +f"""
 class Utils(containers.DeclarativeContainer):
     print = providers.Callable(print)
 
 class App(containers.DeclarativeContainer):
 
-    app = providers.Factory({self.__name.cls}, appname=Config.config.appname, print=Utils.print)
-                            # ,plugins=Plugins.discovered_plugins)
-"""
+    app = providers.Factory({self.__name.cls},
+                            appname=Config.config.appname,
+                            print=Utils.print"""+", plugins=Plugins.discovered_plugins)" if "plugin-system" in self.__flavour else ")"
 
 
 class SetupPy:

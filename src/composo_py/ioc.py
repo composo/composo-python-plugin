@@ -104,6 +104,7 @@ class Python(containers.DeclarativeContainer):
 def get_year():
     return datetime.now().year
 
+
 class System(containers.DeclarativeContainer):
     dry_sys_interface = providers.Factory(DrySysInterface)
     real_sys_interface = providers.Factory(RealSysInterface)
