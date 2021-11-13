@@ -17,4 +17,4 @@ class LiquidTemplateRenderer:
         # template = pkgutil.get_data(file)
 
         liquid_template = liquid.Template(template)
-        return liquid_template.render(self.__config)
+        return liquid_template.render(self.__config).strip() + "\n"

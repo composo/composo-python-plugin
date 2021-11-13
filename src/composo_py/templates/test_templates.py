@@ -24,8 +24,11 @@ class TestLiquidTemplateRenderer:
             TEST_CONFIG)
 
         out = renderer.render(name)
+
+        assert(out.endswith("\n"))
         print("-----")
         print(out)
+        print("-----")
 
     def test_render_app(self):
         self._test_render("app.py")
