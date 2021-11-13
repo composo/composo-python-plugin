@@ -1,13 +1,12 @@
 import dependency_injector.providers as providers
 import dependency_injector.containers as containers
-
 {% if app.flavour contains "plugin_system" %}
 from importlib.metadata import entry_points
 from {{ app.name.package }}.default.plugin import DefaultPlugin
 {% endif %}
-
 from {{ app.name.package }}.app import {{ app.name.class }}
 import logging.config
+
 
 logging_conf = {
     "version": 1,
@@ -39,21 +38,18 @@ logging_conf = {
 
 logging.config.dictConfig(logging_conf)
 
-
 DEFAULT_CONFIG = {
     "appname": "{{ app.name.project }}"
 }
 
 
 class Config(containers.DeclarativeContainer):
-
     config = providers.Configuration("config")
     config.override(DEFAULT_CONFIG)
 
 
 class Utils(containers.DeclarativeContainer):
     print = providers.Callable(print)
-
 {% if app.flavour contains "plugin" %}
 class Plugin(containers.DeclarativeContainer):
     plugin = providers.Factory({{ app.name.class }}Plugin,
@@ -66,7 +62,6 @@ class Plugin(containers.DeclarativeContainer):
 {% endif %}
 
 class App(containers.DeclarativeContainer):
-
     app = providers.Factory({{ app.name.class }},
                             appname=Config.config.appname,
                             print=Utils.print,

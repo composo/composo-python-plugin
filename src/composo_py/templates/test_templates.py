@@ -18,39 +18,23 @@ TEST_CONFIG = {
 
 
 class TestLiquidTemplateRenderer:
-    def test_render_app(self):
 
+    def _test_render(self, name):
         renderer = LiquidTemplateRenderer(
             TEST_CONFIG)
 
-        out = renderer.render("app")
+        out = renderer.render(name)
         print("-----")
         print(out)
+
+    def test_render_app(self):
+        self._test_render("app.py")
 
     def test_render_ioc(self):
-
-        renderer = LiquidTemplateRenderer(
-            TEST_CONFIG)
-
-        out = renderer.render("ioc")
-        print("-----")
-        print(out)
+        self._test_render("ioc.py")
 
     def test_render_main(self):
-
-        renderer = LiquidTemplateRenderer(
-            TEST_CONFIG)
-
-        out = renderer.render("main")
-        print("-----")
-        print(out)
+        self._test_render("main.py")
 
     def test_render_plugin(self):
-
-        renderer = LiquidTemplateRenderer(
-            TEST_CONFIG)
-
-        out = renderer.render("plugin")
-
-        print("------")
-        print(out)
+        self._test_render("plugin.py")
