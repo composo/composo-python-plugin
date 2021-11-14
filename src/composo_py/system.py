@@ -7,9 +7,17 @@ class RealSysInterface:
     def mkdir(self, path, parents=False):
         path.mkdir(exist_ok=True, parents=parents)
 
-    def write(self, path, content, append=False):
+    def write(self, path: Path, content, append=False):
+        # if not path.is_file():
+        #     raise RuntimeError("can only write to a file")
+
+        self.mkdir(path.parent)
         with open(path, 'w') as f:
             f.write(content)
+
+    def read(self, path):
+        with open(path, 'r') as f:
+            return f.read()
 
     def git(self, *args):
         return subprocess.check_call(['git'] + list(args))

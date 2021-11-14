@@ -32,16 +32,17 @@ class ProjectName(dict):
 class ComposoPythonPlugin:
 
     def __init__(self, sys_interface, input_interface, template_renderer_factory, verse, project_name_factory, year,
-                 config):
+                 licenses_getter, config):
         self.__sys_interface = sys_interface
         self.__verse = verse
         self.__project_name_factory = project_name_factory
         self.__year = year
         self.__input_interface = input_interface
         self.__template_renderer_factory = template_renderer_factory
+        self.__licenses_getter = licenses_getter
         self.__config = config
 
-    def new(self, name, flavour="tool,plugin-system,plugin:some-app:myplugin", license="MIT", vcs="git"):
+    def new(self, name, flavour="tool,standalone,plugin-system,plugin:some-app:myplugin", license="MIT", vcs="git"):
 
         name = self.__project_name_factory(name)
 
@@ -53,6 +54,7 @@ class ComposoPythonPlugin:
                 info = dict(parent=self.__project_name_factory(info_list[1].strip()).package, name=info_list[2].strip())
                 fl = info_list[0].strip()
             else:
+                fl = fl.replace("-", "_")
                 info = True
             self.__config["app"]["flavour"][fl] = info
 
@@ -75,16 +77,20 @@ class ComposoPythonPlugin:
         self.__sys_interface.mkdir(package_path, parents=True)
         self.__sys_interface.mkdir(tests_path, parents=True)
 
-        licenses = json.loads(
-            requests.get(f"https://raw.githubusercontent.com/spdx/license-list-data/master/json/licenses.json").text)
-        eligible_licenses = {li["licenseId"]: li for li in licenses["licenses"] if
-                             license.lower() in li["licenseId"].lower() or license.lower() in li["name"].lower()}
-        if not eligible_licenses:
-            raise RuntimeError(f"License not found: {license}")
-        elif len(eligible_licenses) > 1:
-            choice = self.__input_interface.choose_from(eligible_licenses)
-        else:
-            choice = eligible_licenses[0]
+        licenses = self.__licenses_getter.get()
+        eligible_licenses = {li["licenseId"].strip().lower(): li for li in licenses["licenses"]}
+
+        # eligible_licenses = {li["licenseId"]: li for li in licenses["licenses"] if
+        #                      license.lower() in li["licenseId"].lower() or license.lower() in li["name"].lower()}
+        try:
+            choice = eligible_licenses[license.lower().strip()]
+        except KeyError:
+            if not eligible_licenses:
+                raise RuntimeError(f"License not found: {license}")
+            elif len(eligible_licenses) > 1:
+                choice = self.__input_interface.choose_from(eligible_licenses)
+            else:
+                choice = eligible_licenses[0]
 
         self.__config["app"]["license"] = choice
 
@@ -130,6 +136,8 @@ class ComposoPythonPlugin:
 
         if "plugin" in self.__config['app']['flavour']:
             self.__sys_interface.write(package_path / "plugin.py", template_renderer.render("plugin.py"))
+        if "plugin_system" in self.__config['app']['flavour']:
+            self.__sys_interface.write(package_path / "plugins.py", template_renderer.render("plugins.py"))
 
         setup_cfg = self.__verse("setup_cfg")
         self.__sys_interface.write(proj_path / "setup.cfg", setup_cfg.content)

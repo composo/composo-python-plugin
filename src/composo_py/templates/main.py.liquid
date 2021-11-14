@@ -22,19 +22,20 @@ def init(config):
     app = ioc.Plugin.plugin()
     return app
 
-def test_plugin():
+def run_plugin():
     app = ioc.Plugin.plugin()
     app.run("test")
 {% endif -%}
-
 {% if app.flavour.standalone %}
-def test():
+
+def run():
     conf_dir = Path(user_config_dir("{{ app.name.project }}"))
-    ioc.Config.from_yaml(conf_dir / "config.yaml")
+    ioc.Config.config.from_yaml(conf_dir / "config.yaml")
 
     app = ioc.App.app()
     app.run("World")
 {% endif %}
+
 if __name__ == "__main__":
-    {% if app.flavour.plugin %}test_plugin(){% endif -%}
-    {% if app.flavour.standalone %}test(){% endif -%}
+    {% if app.flavour.plugin %}run_plugin(){% endif -%}
+    {% if app.flavour.standalone %}run(){% endif -%}

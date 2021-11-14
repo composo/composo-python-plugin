@@ -2,7 +2,7 @@ import dependency_injector.providers as providers
 import dependency_injector.containers as containers
 {% if app.flavour.plugin_system %}
 from importlib.metadata import entry_points
-from {{ app.name.package }}.default.plugin import DefaultPlugin
+from {{ app.name.package }}.plugins import DefaultPlugin
 {% endif %}
 from {{ app.name.package }}.app import {{ app.name.class }}
 import logging.config
@@ -49,7 +49,7 @@ class Config(containers.DeclarativeContainer):
 
 
 class Utils(containers.DeclarativeContainer):
-    print = providers.Callable(print)
+    print = providers.DelegatedCallable(print)
 {% if app.flavour.plugin %}
 class Plugin(containers.DeclarativeContainer):
     plugin = providers.Factory({{ app.name.class }}Plugin,
@@ -59,6 +59,14 @@ class Plugin(containers.DeclarativeContainer):
                                 logging.getLogger,
                                 {{ app.name.class }}.__name__)
                               )
+{% endif %}
+{% if app.flavour.plugin_system %}
+class Plugins(containers.DeclarativeContainer):
+    discovered_plugins = providers.Callable(lambda name: {ep.name: ep for ep in entry_points()[name]},
+                                            '{{ app.name.package }}.plugins')
+
+    default = providers.Factory(DefaultPlugin,
+                                print=Utils.print)
 {% endif %}
 
 class App(containers.DeclarativeContainer):

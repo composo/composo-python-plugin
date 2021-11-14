@@ -1,10 +1,13 @@
 from datetime import datetime
 from importlib.metadata import entry_points
+from pathlib import Path
 
 import dependency_injector.providers as providers
 import dependency_injector.containers as containers
+from appdirs import user_config_dir
 
 from composo_py.input import InputInterface
+from composo_py.licenses import SPDXLicenseGetter
 from composo_py.plugin import ComposoPythonPlugin, ProjectName
 from composo_py.files import AppPy, MainPy, IocPy, SetupPy, SetupCfg, ToxIni, PyProjectToml, ManifestIn
 from composo_py.system import DrySysInterface, RealSysInterface
@@ -68,6 +71,7 @@ logging_conf = {
 logging.config.dictConfig(logging_conf)
 
 DEFAULT_CONFIG = {
+    "conf_dir": Path(user_config_dir("composo")),
     "app": {
         "flavour": {
             "standalone": True,
@@ -107,6 +111,7 @@ DEFAULT_CONFIG = {
 
 
 class Config(containers.DeclarativeContainer):
+
     config = providers.Configuration("config")
 
     config.from_dict(DEFAULT_CONFIG)
@@ -150,6 +155,9 @@ class System(containers.DeclarativeContainer):
                                         logger=providers.Callable(logging.getLogger, InputInterface.__name__))
 
     year = providers.Callable(get_year)
+    licenses_getter = providers.Factory(SPDXLicenseGetter,
+                                        cache_folder=Config.config.conf_dir,
+                                        sys_interface=sys_interface)
 
 
 class Plugin(containers.DeclarativeContainer):
@@ -160,5 +168,6 @@ class Plugin(containers.DeclarativeContainer):
                                year=System.year,
                                sys_interface=System.sys_interface,
                                input_interface=System.input_interface,
-                               config=Config.config
+                               config=Config.config,
+                               licenses_getter=System.licenses_getter
                                )
