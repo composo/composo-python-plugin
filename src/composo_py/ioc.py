@@ -69,12 +69,12 @@ logging.config.dictConfig(logging_conf)
 
 DEFAULT_CONFIG = {
     "app": {
-        "flavour": [
-            "standalone",
-            "tool",
+        "flavour": {
+            "standalone": True,
+            "tool": True,
             # "plugin_system",
             # "plugin"
-        ],
+        },
         "name": {
             "class": "TestApp",
             "package": "test_app",

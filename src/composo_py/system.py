@@ -1,4 +1,6 @@
 import os
+import subprocess
+from pathlib import Path
 
 
 class RealSysInterface:
@@ -8,6 +10,12 @@ class RealSysInterface:
     def write(self, path, content, append=False):
         with open(path, 'w') as f:
             f.write(content)
+
+    def git(self, *args):
+        return subprocess.check_call(['git'] + list(args))
+
+    def path_exists(self, path: Path):
+        return path.exists()
 
 
 class DrySysInterface:
@@ -22,3 +30,10 @@ class DrySysInterface:
 with open({str(path)}, 'w') as f:
     f.write({triple_q}{content}{triple_q})       
 """)
+
+    def git(self, *args):
+        return print(['git'] + list(args))
+
+    def path_exists(self, path: Path):
+        return path.exists()
+

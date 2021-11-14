@@ -140,7 +140,7 @@ setup(
     install_requires=[
         "dependency-injector",
         "appdirs",
-        "pyyaml"{%- if app.flavour contains "tool" %},
+        "pyyaml"{%- if app.flavour.tool %},
         "fire"{% endif %}
     ],
 
@@ -179,7 +179,8 @@ setup(
     # executes the function `main` from this package when invoked:
     entry_points={
         'console_scripts': [
-            '{{ app.name.project }}={{ app.name.package }}.main:main',
+            {% if app.flavour.standalone %}'{{ app.name.project }}={{ app.name.package }}.main:main',{% endif %}
+            {% if app.flavour.plugin %}"{{ app.flavour.plugin.parent }}.plugins": ["{{ app.flavour.plugin.name }} = {{ app.name.package }}.main"]{% endif %}
         ],
     },
 

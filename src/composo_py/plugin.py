@@ -29,10 +29,6 @@ class ProjectName(dict):
         return "".join([a[0].upper() + a[1:] for a in self.__normalized])
 
 
-def git(*args):
-    return subprocess.check_call(['git'] + list(args))
-
-
 class ComposoPythonPlugin:
 
     def __init__(self, sys_interface, input_interface, template_renderer_factory, verse, project_name_factory, year,
@@ -45,11 +41,21 @@ class ComposoPythonPlugin:
         self.__template_renderer_factory = template_renderer_factory
         self.__config = config
 
-    def new(self, name, flavour="tool,plugin-system,plugin:some-app", license="MIT", vcs="git"):
+    def new(self, name, flavour="tool,plugin-system,plugin:some-app:myplugin", license="MIT", vcs="git"):
 
         name = self.__project_name_factory(name)
 
-        self.__config["app"]["flavour"] = flavour.split(",")
+        for fl in flavour.split(","):
+            fl = fl.strip().lower()
+
+            if fl.startswith("plugin:"):
+                info_list = fl.split(":")
+                info = dict(parent=self.__project_name_factory(info_list[1].strip()).package, name=info_list[2].strip())
+                fl = info_list[0].strip()
+            else:
+                info = True
+            self.__config["app"]["flavour"][fl] = info
+
         self.__config["app"]["name"] = name
 
         cwd = os.getcwd()
@@ -60,7 +66,7 @@ class ComposoPythonPlugin:
         package_path = proj_path / "src" / name.package
         tests_path = proj_path / "tests"
 
-        if proj_path.exists():
+        if self.__sys_interface.path_exists(proj_path):
             if not self.__input_interface.ask_for_consent(
                 "Do you want to overwrite (update) existing directory?"):
                 print("aborting")
@@ -144,9 +150,9 @@ class ComposoPythonPlugin:
         gitignore = requests.get("https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore").text
         self.__sys_interface.write(proj_path / ".gitignore", gitignore)
         if not os.path.exists(proj_path / ".git"):
-            git("init", proj_path)
-            git(f"--git-dir={str(proj_path / '.git')}", f"--work-tree={str(proj_path)}", "add", "--all")
-            git(f"--git-dir={str(proj_path / '.git')}", f"--work-tree={str(proj_path)}", "commit", "-m", "\"initial\"")
-            git(f"--git-dir={str(proj_path / '.git')}", f"--work-tree={str(proj_path)}", "branch", "-M", "main")
-            git(f"--git-dir={str(proj_path / '.git')}", f"--work-tree={str(proj_path)}", "remote", "add", "origin",
+            self.__sys_interface.git("init", proj_path)
+            self.__sys_interface.git(f"--git-dir={str(proj_path / '.git')}", f"--work-tree={str(proj_path)}", "add", "--all")
+            self.__sys_interface.git(f"--git-dir={str(proj_path / '.git')}", f"--work-tree={str(proj_path)}", "commit", "-m", "\"initial\"")
+            self.__sys_interface.git(f"--git-dir={str(proj_path / '.git')}", f"--work-tree={str(proj_path)}", "branch", "-M", "main")
+            self.__sys_interface.git(f"--git-dir={str(proj_path / '.git')}", f"--work-tree={str(proj_path)}", "remote", "add", "origin",
                 f"https://github.com/{self.__config['vcs']['git']['github']['name']}/{name.project}")

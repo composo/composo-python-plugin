@@ -6,7 +6,7 @@ class {{ app.name.class }}:
         self.__logger = logger
         self.__logger.debug(f"{type(self).__name__} initialized")
 
-{%- if app.flavour contains "plugin_system" %}
+{%- if app.flavour.plugin_system %}
 
    def run(self, name, plugin: str = "default", **kwargs):
         try:
