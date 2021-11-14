@@ -20,7 +20,7 @@ class InputInterface:
         nl = "\n"
         choice = self.__input(f"{nl}Choose from: {nl.join(str(k) for k in sorted(choices.keys()))}{nl}{nl}> ")
         try:
-            k, v = normalized_choices[choice]
+            k, v = normalized_choices[choice.lower()]
 
             eligible = {k: v}
         except KeyError:

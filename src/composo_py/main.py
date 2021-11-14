@@ -7,11 +7,11 @@ def init(config):
     return app
 
 
-def test():
+def run():
 
     app = ioc.Plugin.plugin()
-    app.new("test")
+    app.new("my-project")
 
 
 if __name__ == "__main__":
-    test()
+    run()

@@ -12,6 +12,15 @@ import logging.config
 
 from composo_py.templates.templates import LiquidTemplateRenderer
 
+
+def fullname(o):
+    klass = o.__class__
+    module = klass.__module__
+    if module == 'builtins':
+        return klass.__qualname__ # avoid outputs like 'builtins.str'
+    return module + '.' + klass.__qualname__
+
+
 logging_conf = {
     "version": 1,
     "formatters": {
@@ -151,5 +160,5 @@ class Plugin(containers.DeclarativeContainer):
                                year=System.year,
                                sys_interface=System.sys_interface,
                                input_interface=System.input_interface,
-                               config=providers.Delegate(Config.config)
+                               config=Config.config
                                )

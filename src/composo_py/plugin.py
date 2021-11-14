@@ -6,11 +6,15 @@ import re
 import subprocess
 
 
-class ProjectName:
+class ProjectName(dict):
 
     def __init__(self, name):
+        super().__init__()
         self.__normalized = tuple(re.split("[_-]", name))
         self.__name = name
+        self['package'] = self.package
+        self['class'] = self.cls
+        self['project'] = self.project
 
     @property
     def package(self):
@@ -41,7 +45,7 @@ class ComposoPythonPlugin:
         self.__template_renderer_factory = template_renderer_factory
         self.__config = config
 
-    def new(self, name, flavour="tool,plugin-system,plugin:some-app", license="mit", vcs="git"):
+    def new(self, name, flavour="tool,plugin-system,plugin:some-app", license="MIT", vcs="git"):
 
         name = self.__project_name_factory(name)
 
@@ -56,10 +60,11 @@ class ComposoPythonPlugin:
         package_path = proj_path / "src" / name.package
         tests_path = proj_path / "tests"
 
-        if proj_path.exists() and not self.__input_interface.ask_for_consent(
+        if proj_path.exists():
+            if not self.__input_interface.ask_for_consent(
                 "Do you want to overwrite (update) existing directory?"):
-            print("aborting")
-            return
+                print("aborting")
+                return
 
         self.__sys_interface.mkdir(package_path, parents=True)
         self.__sys_interface.mkdir(tests_path, parents=True)
@@ -67,7 +72,7 @@ class ComposoPythonPlugin:
         licenses = json.loads(
             requests.get(f"https://raw.githubusercontent.com/spdx/license-list-data/master/json/licenses.json").text)
         eligible_licenses = {li["licenseId"]: li for li in licenses["licenses"] if
-                             license.lower() in li["licenseId"].lower() or license in li["name"].lower()}
+                             license.lower() in li["licenseId"].lower() or license.lower() in li["name"].lower()}
         if not eligible_licenses:
             raise RuntimeError(f"License not found: {license}")
         elif len(eligible_licenses) > 1:
@@ -75,7 +80,7 @@ class ComposoPythonPlugin:
         else:
             choice = eligible_licenses[0]
 
-        self.__config.app.license = license
+        self.__config["app"]["license"] = choice
 
         # license_specifier = f"OSI Approved :: {choice['licenseId']} License" if choice["isOsiApproved"] else f"{choice['licenseId']} License"
         # license = requests.get(f"https://raw.githubusercontent.com/spdx/license-list-data/master/text/{choice['licenseId']}.txt").text
@@ -85,15 +90,15 @@ class ComposoPythonPlugin:
         #     .replace("<COPYRIGHT HOLDER>", str(self.__author)) \
 
         license_response = requests.get(
-            f"https://raw.githubusercontent.com/licenses/license-templates/master/templates/{license}.txt")
+            f"https://raw.githubusercontent.com/licenses/license-templates/master/templates/{choice['licenseId'].lower()}.txt")
         if license_response.status_code == 404:
             nl = "\n"
-            license_text = f"Copyright {self.__year} by {self.__config.author.name}{nl}{nl}LICENSE template for {choice['licenseId']} not found, please provide a proper license file"
+            license_text = f"Copyright {self.__year} by {self.__config['author']['name']}{nl}{nl}LICENSE template for {choice['licenseId']} not found, please provide a proper license file"
         else:
             license_text = license_response.text
 
         license_text = license_text.replace("{{ year }}", str(self.__year)) \
-            .replace("{{ organization }}", str(self.__config.author.name)) \
+            .replace("{{ organization }}", str(self.__config['author']['name'])) \
             .replace("{{ project }}", str(name.project))
 
         template_renderer = self.__template_renderer_factory(self.__config)
@@ -117,7 +122,7 @@ class ComposoPythonPlugin:
 
         self.__sys_interface.write(package_path / "app.py", template_renderer.render("app.py"))
 
-        if "plugin" in self.__config.app.flavour:
+        if "plugin" in self.__config['app']['flavour']:
             self.__sys_interface.write(package_path / "plugin.py", template_renderer.render("plugin.py"))
 
         setup_cfg = self.__verse("setup_cfg")
@@ -144,4 +149,4 @@ class ComposoPythonPlugin:
             git(f"--git-dir={str(proj_path / '.git')}", f"--work-tree={str(proj_path)}", "commit", "-m", "\"initial\"")
             git(f"--git-dir={str(proj_path / '.git')}", f"--work-tree={str(proj_path)}", "branch", "-M", "main")
             git(f"--git-dir={str(proj_path / '.git')}", f"--work-tree={str(proj_path)}", "remote", "add", "origin",
-                f"https://github.com/{self.__github_name}/{name.project}")
+                f"https://github.com/{self.__config['vcs']['git']['github']['name']}/{name.project}")
