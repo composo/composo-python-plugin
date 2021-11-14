@@ -4,6 +4,9 @@ import dependency_injector.containers as containers
 from importlib.metadata import entry_points
 from {{ app.name.package }}.plugins import DefaultPlugin
 {% endif %}
+{% if app.flavour.plugin %}
+from {{ app.name.package }}.plugin import {{ app.name.class }}Plugin
+{% endif %}
 from {{ app.name.package }}.app import {{ app.name.class }}
 import logging.config
 
@@ -53,7 +56,7 @@ class Utils(containers.DeclarativeContainer):
 {% if app.flavour.plugin %}
 class Plugin(containers.DeclarativeContainer):
     plugin = providers.Factory({{ app.name.class }}Plugin,
-                              plugin_name={{ app.name.package }},
+                              plugin_name="{{ app.name.package }}",
                               print=Utils.print,
                               logger=providers.Callable(
                                 logging.getLogger,

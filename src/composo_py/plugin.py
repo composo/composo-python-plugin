@@ -132,8 +132,8 @@ class ComposoPythonPlugin:
 
         self.__sys_interface.write(package_path / "main.py", template_renderer.render("main.py"))
 
-        self.__sys_interface.write(package_path / "app.py", template_renderer.render("app.py"))
-
+        if "standalone" in self.__config['app']['flavour']:
+            self.__sys_interface.write(package_path / "app.py", template_renderer.render("app.py"))
         if "plugin" in self.__config['app']['flavour']:
             self.__sys_interface.write(package_path / "plugin.py", template_renderer.render("plugin.py"))
         if "plugin_system" in self.__config['app']['flavour']:

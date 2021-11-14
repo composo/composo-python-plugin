@@ -37,5 +37,5 @@ def run():
 {% endif %}
 
 if __name__ == "__main__":
-    {% if app.flavour.plugin %}run_plugin(){% endif -%}
+    {% if app.flavour.plugin %}run_plugin(){% endif %}
     {% if app.flavour.standalone %}run(){% endif -%}
