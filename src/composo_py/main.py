@@ -8,8 +8,9 @@ def init(config):
 
 
 def test():
+
     app = ioc.Plugin.plugin()
-    app.run("test")
+    app.new("test")
 
 
 if __name__ == "__main__":

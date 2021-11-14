@@ -10,6 +10,7 @@ from composo_py.files import AppPy, MainPy, IocPy, SetupPy, SetupCfg, ToxIni, Py
 from composo_py.system import DrySysInterface, RealSysInterface
 import logging.config
 
+from composo_py.templates.templates import LiquidTemplateRenderer
 
 logging_conf = {
     "version": 1,
@@ -57,12 +58,43 @@ logging_conf = {
 
 logging.config.dictConfig(logging_conf)
 
-
 DEFAULT_CONFIG = {
-    "author": "A. Random Developer",
-    "github_name": "Arand",
-    "email": "example@mail.com"
+    "app": {
+        "flavour": [
+            "standalone",
+            "tool",
+            # "plugin_system",
+            # "plugin"
+        ],
+        "name": {
+            "class": "TestApp",
+            "package": "test_app",
+            "project": "test-app"
+        },
+        "license": {
+            "isOsiApproved": True,
+            "licenseId": "MIT"
+        }
+    },
+    "author": {
+        "name": "A. Random Developer",
+        "email": "a.random@email.com",
+    },
+    "vcs": {
+        "git": {
+            "github": {
+                "name": "Arand"
+            }
+        }
+    },
+    "dry_run": "true"
 }
+
+# DEFAULT_CONFIG = {
+#     "author": "A. Random Developer",
+#     "github_name": "Arand",
+#     "email": "example@mail.com"
+# }
 
 
 class Config(containers.DeclarativeContainer):
@@ -71,29 +103,20 @@ class Config(containers.DeclarativeContainer):
     config.from_dict(DEFAULT_CONFIG)
 
 
+class Templates(containers.DeclarativeContainer):
+    template_renderer = providers.Factory(LiquidTemplateRenderer)
+
+
 class Python(containers.DeclarativeContainer):
 
     project_name_factory = providers.DelegatedFactory(ProjectName)
 
-    setup_py = providers.Factory(SetupPy,
-                                 author=Config.config.author,
-                                 email=Config.config.email,
-                                 github_name=Config.config.github_name,
-                                 )
-
-    ioc_py = providers.Factory(IocPy)
-    main_py = providers.Factory(MainPy)
-    app_py = providers.Factory(AppPy)
     setup_cfg = providers.Factory(SetupCfg)
     tox_ini = providers.Factory(ToxIni)
     pyproject_toml = providers.Factory(PyProjectToml)
     manifest_in = providers.Factory(ManifestIn)
 
     verse = providers.FactoryAggregate(
-        setup_py=setup_py,
-        ioc_py=ioc_py,
-        main_py=main_py,
-        app_py=app_py,
         setup_cfg=setup_cfg,
         tox_ini=tox_ini,
         pyproject_toml=pyproject_toml,
@@ -122,11 +145,11 @@ class System(containers.DeclarativeContainer):
 
 class Plugin(containers.DeclarativeContainer):
     plugin = providers.Factory(ComposoPythonPlugin,
+                               template_renderer_factory=providers.FactoryDelegate(Templates.template_renderer),
                                project_name_factory=Python.project_name_factory,
                                verse=Python.verse,
-                               author=Config.config.author,
                                year=System.year,
                                sys_interface=System.sys_interface,
                                input_interface=System.input_interface,
-                               github_name=Config.config.github_name,
-                               email=Config.config.email)
+                               config=providers.Delegate(Config.config)
+                               )

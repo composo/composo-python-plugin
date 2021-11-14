@@ -40,7 +40,7 @@ class TestLiquidTemplateRenderer:
 
         out = renderer.render(name)
 
-        assert(out.endswith("\n"))
+        assert out.endswith("\n")
         print("-----")
         print(out)
         print("-----")
