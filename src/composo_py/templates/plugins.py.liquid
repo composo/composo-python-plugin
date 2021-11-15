@@ -2,14 +2,14 @@ from {{ app.name.package }} import ioc
 
 
 class DefaultPlugin:
-    def __init__(self, print):
-        self.__print = print
+    def __init__(self, ui):
+        self.__ui = ui
 
     def run(self, name, foo="bar"):
-        self.__print(f"Hello {name} from plugin default with arg foo: {foo}")
+        self.__ui.print(f"Hello {name} from plugin default with arg foo: {foo}")
 
 
-def init(config):
-    app = ioc.Plugins.default()
+def init(config, ui):
+    app = ioc.Plugins.default(ui)
     return app
 

@@ -1,7 +1,7 @@
 from {{ app.name.package }}.app import {{ app.name.class }}
 
 
-class MockPrinter:
+class MockUI:
     def __init__(self):
         self.printed = None
 
@@ -26,9 +26,9 @@ class MockLogger:
 
 class Test{{ app.name.class }}:
     def test_new(self):
-        mock_printer = MockPrinter()
+        mock_ui = MockUI()
         mock_logger = MockLogger()
-        app = {{ app.name.class }}("{{ app.name.project }}", mock_printer.print, mock_logger)
+        app = {{ app.name.class }}("{{ app.name.project }}", ui=mock_ui, logger=mock_logger{% if app.flavour.plugin_system %}, plugins={}{% endif %})
         app.run("{{ author.name }}")
-        assert mock_logger.msgs[0] == "{{ app.name.class }} initialized"
-        assert mock_printer.printed == f"Hello {{ author.name }} from {{ app.name.project }}"
+        assert mock_logger.msgs[0] == ("DEBUG", "{{ app.name.class }} initialized")
+        assert mock_ui.printed == f"Hello {{ author.name }} from {{ app.name.project }}"

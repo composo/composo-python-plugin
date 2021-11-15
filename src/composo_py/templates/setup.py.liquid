@@ -178,7 +178,7 @@ setup(
     # For example, the following would provide a command called `{{ app.name.project }}` which
     # executes the function `main` from this package when invoked:
     entry_points={
-        'console_scripts': [{% if app.flavour.standalone %}'{{ app.name.project }}={{ app.name.package }}.main:main'],{% endif %}
+        {% if app.flavour.standalone %}'console_scripts': ['{{ app.name.project }}={{ app.name.package }}.main:main'],{% endif %}
         {% if app.flavour.plugin %}"{{ app.flavour.plugin.parent }}.plugins": ["{{ app.flavour.plugin.name }} = {{ app.name.package }}.main"],{% endif %}
         {% if app.flavour.plugin_system %}"{{ app.name.package }}.plugins": ["default = {{ app.name.package }}.plugins.default"]{% endif %}
     },

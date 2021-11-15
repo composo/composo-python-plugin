@@ -1,8 +1,8 @@
 class {{ app.name.class }}:
 {% comment %} Main class for app {% endcomment %}
-    def __init__(self, appname, print, logger{% if app.flavour.plugin_system %}, plugins{% endif %}):
+    def __init__(self, appname, ui, logger{% if app.flavour.plugin_system %}, plugins{% endif %}):
         self.__appname = appname
-        self.__print = print
+        self.__ui = ui
         self.__logger = logger
         self.__logger.debug(f"{type(self).__name__} initialized")
 {%- if app.flavour.plugin_system %}
@@ -11,14 +11,14 @@ class {{ app.name.class }}:
     def run(self, name, plugin: str = "default", **kwargs):
         config = {}
         try:
-            plugin = self.__plugins[plugin].load().init(config)
+            plugin = self.__plugins[plugin].load().init(config, self.__ui)
             plugin.run(name=name, **kwargs)
 
         except KeyError as e:
-            print(f"no plugin {plugin} found, available plugins are: {[k for k, _ in self.__plugins.items()]}")
+            self.__ui.print(f"no plugin {plugin} found, available plugins are: {[k for k, _ in self.__plugins.items()]}")
 
-        self.__print(f"Hello {name} from {self.__appname}")
+        self.__ui.print(f"Hello {name} from {self.__appname}")
 {% else %}
     def run(self, name):
-        self.__print(f"Hello {name} from {self.__appname}")
+        self.__ui.print(f"Hello {name} from {self.__appname}")
 {%- endif -%}

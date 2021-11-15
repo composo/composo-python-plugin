@@ -2,10 +2,13 @@
 import fire
 {% endif -%}
 from {{ app.name.package }} import ioc
+{% if app.flavour.standalone -%}
 from appdirs import user_config_dir
 from pathlib import Path
+{%- endif -%}
+{%- if app.flavour.standalone %}
 
-{% if app.flavour.standalone %}
+
 def main():
     conf_dir = Path(user_config_dir("{{ app.name.project }}"))
     ioc.Config.config.from_yaml(conf_dir / "config.yaml")
@@ -15,12 +18,14 @@ def main():
     fire.Fire(app)
     {% endif -%}
 {% endif -%}
+{%- if app.flavour.plugin %}
 
-{% if app.flavour.plugin %}
-def init(config):
+
+def init(config, ui):
     ioc.Config.config.from_dict(config)
-    app = ioc.Plugin.plugin()
+    app = ioc.Plugin.plugin(ui=ui)
     return app
+
 
 def run_plugin():
     app = ioc.Plugin.plugin()

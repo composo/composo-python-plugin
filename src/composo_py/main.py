@@ -10,7 +10,7 @@ def init(config):
 def run():
 
     app = ioc.Plugin.plugin()
-    app.new("my-project")
+    app.new("my-project", flavour="plugin:my-proj:plug")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,11 @@
+class UserInterface:
+
+    def __init__(self, _print, _input):
+        self.__print = _print
+        self.__input = _input
+
+    def print(self, msg):
+        self.__print(msg)
+
+    def input(self, msg):
+        return self.__input(msg)

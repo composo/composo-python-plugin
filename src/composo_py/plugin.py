@@ -45,7 +45,8 @@ class ComposoPythonPlugin:
     def new(self, name, flavour="tool,standalone,plugin-system,plugin:some-app:myplugin", license="MIT", vcs="git"):
 
         name = self.__project_name_factory(name)
-
+        if flavour:
+            self.__config['app']['flavour'] = {}
         for fl in flavour.split(","):
             fl = fl.strip().lower()
 
@@ -53,6 +54,8 @@ class ComposoPythonPlugin:
                 info_list = fl.split(":")
                 info = dict(parent=self.__project_name_factory(info_list[1].strip()).package, name=info_list[2].strip())
                 fl = info_list[0].strip()
+            elif fl.startswith("tool"):
+                self.__config['app']['flavour']['standalone'] = True
             else:
                 fl = fl.replace("-", "_")
                 info = True
@@ -134,6 +137,7 @@ class ComposoPythonPlugin:
 
         if "standalone" in self.__config['app']['flavour']:
             self.__sys_interface.write(package_path / "app.py", template_renderer.render("app.py"))
+            self.__sys_interface.write(package_path / "utils.py", template_renderer.render("utils.py"))
         if "plugin" in self.__config['app']['flavour']:
             self.__sys_interface.write(package_path / "plugin.py", template_renderer.render("plugin.py"))
         if "plugin_system" in self.__config['app']['flavour']:

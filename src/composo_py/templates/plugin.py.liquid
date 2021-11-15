@@ -1,11 +1,11 @@
 class {{ app.name.class }}Plugin:
 {% comment %} app plugins {% endcomment %}
-    def __init__(self, plugin_name, print, logger):
-        self.__print = print
+    def __init__(self, plugin_name, ui, logger):
+        self.__ui = ui
         self.__logger = logger
         self.__plugin_name = plugin_name
 
         self.__logger.debug("Initialized plugin")
 
-    def run(self, name, foo="foo"):
-        self.__print(f"Hello {name} from plugin {self.__plugin_name} with arg foo: {foo}")
+    def run(self, name, foo="bar"):
+        self.__ui.print(f"Hello {name} from plugin {self.__plugin_name} with arg foo: {foo}")
