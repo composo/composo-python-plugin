@@ -4,12 +4,14 @@ from pathlib import Path
 
 import dependency_injector.providers as providers
 import dependency_injector.containers as containers
-from appdirs import user_config_dir
+import requests
+from appdirs import user_config_dir, user_cache_dir
 
 from composo_py.input import InputInterface
-from composo_py.licenses import SPDXLicenseGetter
+from composo_py.licenses import SPDXLicensesGetter, LicenseService, LicenseServiceCached
 from composo_py.plugin import ComposoPythonPlugin, ProjectName
 from composo_py.files import AppPy, MainPy, IocPy, SetupPy, SetupCfg, ToxIni, PyProjectToml, ManifestIn
+from composo_py.resources import CachedResourceGetter
 from composo_py.system import DrySysInterface, RealSysInterface
 import logging.config
 
@@ -20,7 +22,7 @@ def fullname(o):
     klass = o.__class__
     module = klass.__module__
     if module == 'builtins':
-        return klass.__qualname__ # avoid outputs like 'builtins.str'
+        return klass.__qualname__  # avoid outputs like 'builtins.str'
     return module + '.' + klass.__qualname__
 
 
@@ -72,6 +74,7 @@ logging.config.dictConfig(logging_conf)
 
 DEFAULT_CONFIG = {
     "conf_dir": Path(user_config_dir("composo")),
+    "cache_dir": Path(user_cache_dir("composo")),
     "app": {
         "flavour": {
             "standalone": True,
@@ -103,6 +106,7 @@ DEFAULT_CONFIG = {
     "dry_run": "true"
 }
 
+
 # DEFAULT_CONFIG = {
 #     "author": "A. Random Developer",
 #     "github_name": "Arand",
@@ -111,7 +115,6 @@ DEFAULT_CONFIG = {
 
 
 class Config(containers.DeclarativeContainer):
-
     config = providers.Configuration("config")
 
     config.from_dict(DEFAULT_CONFIG)
@@ -122,7 +125,6 @@ class Templates(containers.DeclarativeContainer):
 
 
 class Python(containers.DeclarativeContainer):
-
     project_name_factory = providers.DelegatedFactory(ProjectName)
 
     setup_cfg = providers.Factory(SetupCfg)
@@ -147,17 +149,26 @@ class System(containers.DeclarativeContainer):
     real_sys_interface = providers.Factory(RealSysInterface)
 
     sys_interface = providers.Selector(Config.config.dry_run,
-        false=real_sys_interface,
-        true=dry_sys_interface
-    )
+                                       false=real_sys_interface,
+                                       true=dry_sys_interface)
     input_interface = providers.Factory(InputInterface,
                                         _input=providers.DelegatedCallable(input),
                                         logger=providers.Callable(logging.getLogger, InputInterface.__name__))
 
+    resource_getter = providers.Factory(CachedResourceGetter,
+                                        get_request=providers.DelegatedCallable(requests.get),
+                                        sys_interface=sys_interface,
+                                        cache_folder=Config.config.cache_dir,
+                                        request_exception_type=requests.exceptions.ConnectionError
+                                        )
+
     year = providers.Callable(get_year)
-    licenses_getter = providers.Factory(SPDXLicenseGetter,
-                                        cache_folder=Config.config.conf_dir,
+    licenses_getter = providers.Factory(SPDXLicensesGetter,
+                                        cache_folder=Config.config.cache_dir,
                                         sys_interface=sys_interface)
+    license_service = providers.Factory(LicenseServiceCached,
+                                        resource_getter=resource_getter,
+                                        input_interface=input_interface)
 
 
 class Plugin(containers.DeclarativeContainer):
@@ -169,5 +180,6 @@ class Plugin(containers.DeclarativeContainer):
                                sys_interface=System.sys_interface,
                                input_interface=System.input_interface,
                                config=Config.config,
-                               licenses_getter=System.licenses_getter
+                               license_service=System.license_service,
+                               resource_getter=System.resource_getter
                                )

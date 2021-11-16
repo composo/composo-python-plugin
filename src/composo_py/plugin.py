@@ -32,15 +32,16 @@ class ProjectName(dict):
 class ComposoPythonPlugin:
 
     def __init__(self, sys_interface, input_interface, template_renderer_factory, verse, project_name_factory, year,
-                 licenses_getter, config):
+                 license_service, config, resource_getter):
         self.__sys_interface = sys_interface
         self.__verse = verse
         self.__project_name_factory = project_name_factory
         self.__year = year
         self.__input_interface = input_interface
         self.__template_renderer_factory = template_renderer_factory
-        self.__licenses_getter = licenses_getter
+        self.__licence_service = license_service
         self.__config = config
+        self.__resource_getter = resource_getter
 
     def new(self, name, flavour="tool,standalone,plugin-system,plugin:some-app:myplugin", license="MIT", vcs="git"):
 
@@ -80,37 +81,7 @@ class ComposoPythonPlugin:
         self.__sys_interface.mkdir(package_path, parents=True)
         self.__sys_interface.mkdir(tests_path, parents=True)
 
-        licenses = self.__licenses_getter.get()
-        eligible_licenses = {li["licenseId"].strip().lower(): li for li in licenses["licenses"]}
-
-        # eligible_licenses = {li["licenseId"]: li for li in licenses["licenses"] if
-        #                      license.lower() in li["licenseId"].lower() or license.lower() in li["name"].lower()}
-        try:
-            choice = eligible_licenses[license.lower().strip()]
-        except KeyError:
-            if not eligible_licenses:
-                raise RuntimeError(f"License not found: {license}")
-            elif len(eligible_licenses) > 1:
-                choice = self.__input_interface.choose_from(eligible_licenses)
-            else:
-                choice = eligible_licenses[0]
-
-        self.__config["app"]["license"] = choice
-
-        # license_specifier = f"OSI Approved :: {choice['licenseId']} License" if choice["isOsiApproved"] else f"{choice['licenseId']} License"
-        # license = requests.get(f"https://raw.githubusercontent.com/spdx/license-list-data/master/text/{choice['licenseId']}.txt").text
-        # license = license.replace("YEAR", str(self.__year)) \
-        #     .replace("AUTHOR", str(self.__author)) \
-        #     .replace("EMAIL", str(self.__email)) \
-        #     .replace("<COPYRIGHT HOLDER>", str(self.__author)) \
-
-        license_response = requests.get(
-            f"https://raw.githubusercontent.com/licenses/license-templates/master/templates/{choice['licenseId'].lower()}.txt")
-        if license_response.status_code == 404:
-            nl = "\n"
-            license_text = f"Copyright {self.__year} by {self.__config['author']['name']}{nl}{nl}LICENSE template for {choice['licenseId']} not found, please provide a proper license file"
-        else:
-            license_text = license_response.text
+        license_info, license_text = self.__licence_service.get(license)
 
         license_text = license_text.replace("{{ year }}", str(self.__year)) \
             .replace("{{ organization }}", str(self.__config['author']['name'])) \
@@ -159,7 +130,7 @@ class ComposoPythonPlugin:
         if vcs != "git":
             raise RuntimeError(f"vcs: {vcs} is not supported")
 
-        gitignore = requests.get("https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore").text
+        gitignore = self.__resource_getter.get("https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore")
         self.__sys_interface.write(proj_path / ".gitignore", gitignore)
         if not os.path.exists(proj_path / ".git"):
             self.__sys_interface.git("init", proj_path)

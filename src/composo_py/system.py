@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 class RealSysInterface:
-    def mkdir(self, path, parents=False):
+    def mkdir(self, path: Path, parents=False):
         path.mkdir(exist_ok=True, parents=parents)
 
     def write(self, path: Path, content, append=False):
