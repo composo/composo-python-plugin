@@ -1,7 +1,7 @@
 from composo_py import ioc
 
 
-def init(config):
+def init(config, dry_run=False):
     ioc.Config.config.from_dict(config)
     app = ioc.Plugin.plugin()
     return app
@@ -9,8 +9,9 @@ def init(config):
 
 def run():
 
+    ioc.Config.config.from_dict({"flavour": "tool", "dry_run": "true"})
     app = ioc.Plugin.plugin()
-    app.new("my-project", flavour="plugin:my-proj:plug")
+    app.new("my-project", init=True)
 
 
 if __name__ == "__main__":

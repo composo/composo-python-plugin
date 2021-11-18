@@ -73,12 +73,12 @@ logging_conf = {
 logging.config.dictConfig(logging_conf)
 
 DEFAULT_CONFIG = {
-    "conf_dir": Path(user_config_dir("composo")),
-    "cache_dir": Path(user_cache_dir("composo")),
+    "conf_dir": user_config_dir("composo"),
+    "cache_dir": user_cache_dir("composo"),
     "app": {
         "flavour": {
-            "standalone": True,
-            "tool": True,
+            # "standalone": True,
+            # "tool": True,
             # "plugin_system",
             # "plugin"
         },
@@ -87,10 +87,6 @@ DEFAULT_CONFIG = {
             "package": "test_app",
             "project": "test-app"
         },
-        "license": {
-            "isOsiApproved": True,
-            "licenseId": "MIT"
-        }
     },
     "author": {
         "name": "A. Random Developer",
@@ -103,7 +99,7 @@ DEFAULT_CONFIG = {
             }
         }
     },
-    "dry_run": "true"
+    "dry_run": "false"
 }
 
 
@@ -124,8 +120,18 @@ class Templates(containers.DeclarativeContainer):
     template_renderer = providers.Factory(LiquidTemplateRenderer)
 
 
+def generate_project_name(name, project_name_factory):
+    p_name = project_name_factory(name)
+    return {
+        "project": p_name.project,
+        "package": p_name.package,
+        "class": p_name.cls
+    }
+
+
 class Python(containers.DeclarativeContainer):
-    project_name_factory = providers.DelegatedFactory(ProjectName)
+    project_name_factory = providers.DelegatedCallable(generate_project_name,
+                                                       project_name_factory=providers.DelegatedFactory(ProjectName))
 
     setup_cfg = providers.Factory(SetupCfg)
     tox_ini = providers.Factory(ToxIni)
@@ -144,11 +150,17 @@ def get_year():
     return datetime.now().year
 
 
+def get_dry_run(dry_run: bool):
+    return str(dry_run).lower()
+
+
 class System(containers.DeclarativeContainer):
     dry_sys_interface = providers.Factory(DrySysInterface)
     real_sys_interface = providers.Factory(RealSysInterface)
 
-    sys_interface = providers.Selector(Config.config.dry_run,
+    dry_run_selection = providers.Callable(str)
+
+    sys_interface = providers.Selector(providers.Callable(get_dry_run, Config.config.dry_run),
                                        false=real_sys_interface,
                                        true=dry_sys_interface)
     input_interface = providers.Factory(InputInterface,

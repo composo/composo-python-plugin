@@ -33,7 +33,7 @@ class CachedResourceGetter:
                 return ""
             text = response.text
             self.__sys_interface.mkdir(Path(cache_url.path).parent, parents=True)
-            self.__sys_interface.write(cache_url.path, text)
+            self.__sys_interface.write(Path(cache_url.path), text)
         except self.__request_exception_type as e:
             self.__sys_interface.mkdir(Path(cache_url.path).parent, parents=True)
             url = cache_url.geturl()
