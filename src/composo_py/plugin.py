@@ -98,14 +98,8 @@ class ComposoPythonPlugin:
         cwd = Path(os.getcwd())
         target_path = cwd / Path(path)
 
-        with open(target_path / ".composo.yaml") as f:
-            try:
-                config = yaml.safe_load(f)
-            except yaml.YAMLError as exc:
-                print(exc)
-
-        self._prepare(target_path, config["app"]["name"])
-        self._init(target_path, config)
+        self._prepare(target_path, self.__config["app"]["name"])
+        self._init(target_path, self.__config)
 
     def _init(self, proj_path, config):
 
