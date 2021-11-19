@@ -35,7 +35,7 @@ class ProjectName(dict):
 class ComposoPythonPlugin:
 
     def __init__(self, sys_interface, input_interface, template_renderer_factory, verse, project_name_factory, year,
-                 license_service, config, resource_getter):
+                 license_service, config: dict, resource_getter):
         self.__sys_interface = sys_interface
         self.__verse = verse
         self.__project_name_factory = project_name_factory
@@ -54,16 +54,15 @@ class ComposoPythonPlugin:
         self.__sys_interface.mkdir(package_path, parents=True)
         self.__sys_interface.mkdir(tests_path, parents=True)
 
-    def _configure(self, name: str):
-        project_config = copy(self.__config)
-        name = self.__project_name_factory(name)
-
-        project_config['app']['flavour'] = {}
-        for fl in project_config["flavour"].split(","):
+    def _parse_flavour(self, flavour):
+        flavours = dict()
+        for fl in flavour.split(","):
+            if not fl:
+                continue
             fl = fl.strip().lower()
 
             if fl.startswith("tool"):
-                project_config['app']['flavour']['standalone'] = True
+                flavours['standalone'] = True
 
             if fl.startswith("plugin:"):
                 info_list = fl.split(":")
@@ -73,9 +72,18 @@ class ComposoPythonPlugin:
             else:
                 fl = fl.replace("-", "_")
                 info = True
-            project_config["app"]["flavour"][fl] = info
+            flavours[fl] = info
+        return flavours
+
+    def _configure(self, name: str):
+        project_config = copy(self.__config)
+        name = self.__project_name_factory(name)
+
+        if "flavour" in project_config:
+            project_config['app']['flavour'] = self._parse_flavour(project_config["flavour"])
+            del project_config["flavour"]
+
         project_config["app"]["name"] = name
-        del project_config["flavour"]
 
         return project_config
 
@@ -114,23 +122,11 @@ class ComposoPythonPlugin:
             .replace("{{ organization }}", str(config['author']['name'])) \
             .replace("{{ project }}", str(name["project"]))
         template_renderer = self.__template_renderer_factory(config)
+
+        ## PROJECT
         self.__sys_interface.write(proj_path / "README.md", f"# {name['project']}")
         self.__sys_interface.write(proj_path / "LICENSE.txt", license_text)
-        ## TESTS
-        self.__sys_interface.write(tests_path / "__init__.py", "")
-        self.__sys_interface.write(tests_path / "test_app.py", template_renderer.render("test_app.py"))
-        ## SRC
-        self.__sys_interface.write(package_path / "__init__.py", "")
         self.__sys_interface.write(proj_path / "setup.py", template_renderer.render("setup.py"))
-        self.__sys_interface.write(package_path / "ioc.py", template_renderer.render("ioc.py"))
-        self.__sys_interface.write(package_path / "main.py", template_renderer.render("main.py"))
-        if "standalone" in config['app']['flavour']:
-            self.__sys_interface.write(package_path / "app.py", template_renderer.render("app.py"))
-            self.__sys_interface.write(package_path / "utils.py", template_renderer.render("utils.py"))
-        if "plugin" in config['app']['flavour']:
-            self.__sys_interface.write(package_path / "plugin.py", template_renderer.render("plugin.py"))
-        if "plugin_system" in config['app']['flavour']:
-            self.__sys_interface.write(package_path / "plugins.py", template_renderer.render("plugins.py"))
         setup_cfg = self.__verse("setup_cfg")
         self.__sys_interface.write(proj_path / "setup.cfg", setup_cfg.content)
         tox_ini = self.__verse("tox_ini")
@@ -139,6 +135,26 @@ class ComposoPythonPlugin:
         self.__sys_interface.write(proj_path / "pyproject.toml", pyproject_toml.content)
         manifest_in = self.__verse("manifest_in")
         self.__sys_interface.write(proj_path / "MANIFEST.in", manifest_in.content)
+
+        # TESTS
+        self.__sys_interface.write(tests_path / "__init__.py", "")
+
+        # SRC
+        self.__sys_interface.write(package_path / "__init__.py", "")
+        if "flavour" in config["app"]:
+            if "standalone" in config["app"]["flavour"] or "plugin" in config["app"]["flavour"]:
+                self.__sys_interface.write(package_path / "ioc.py", template_renderer.render("ioc.py"))
+                self.__sys_interface.write(package_path / "main.py", template_renderer.render("main.py"))
+            if "standalone" in config['app']['flavour']:
+                self.__sys_interface.write(package_path / "app.py", template_renderer.render("app.py"))
+                self.__sys_interface.write(package_path / "utils.py", template_renderer.render("utils.py"))
+                self.__sys_interface.write(tests_path / "test_app.py", template_renderer.render("test_app.py"))
+            if "plugin" in config['app']['flavour']:
+                self.__sys_interface.write(package_path / "plugin.py", template_renderer.render("plugin.py"))
+            if "plugin_system" in config['app']['flavour']:
+                self.__sys_interface.write(package_path / "plugins.py", template_renderer.render("plugins.py"))
+
+        # Src Control
         if vcs is None or vcs == "":
             print("no version control system will be used")
             # return

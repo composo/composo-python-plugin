@@ -9,9 +9,9 @@ def init(config, dry_run=False):
 
 def run():
 
-    ioc.Config.config.from_dict({"flavour": "tool", "dry_run": "true"})
+    ioc.Config.config.from_dict({"dry_run": "true"})
     app = ioc.Plugin.plugin()
-    app.new("my-project", init=True)
+    app.new("my-project")
 
 
 if __name__ == "__main__":

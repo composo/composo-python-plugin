@@ -76,12 +76,12 @@ DEFAULT_CONFIG = {
     "conf_dir": user_config_dir("composo"),
     "cache_dir": user_cache_dir("composo"),
     "app": {
-        "flavour": {
-            # "standalone": True,
-            # "tool": True,
-            # "plugin_system",
-            # "plugin"
-        },
+        # "flavour": {
+        #     # "standalone": True,
+        #     # "tool": True,
+        #     # "plugin_system",
+        #     # "plugin"
+        # },
         "name": {
             "class": "TestApp",
             "package": "test_app",
