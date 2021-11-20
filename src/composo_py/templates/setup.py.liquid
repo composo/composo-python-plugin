@@ -160,7 +160,10 @@ setup(
     # If there are data files included in your packages that need to be
     # installed, specify them here.
     package_data={
-        # '{{ app.name.project }}': ['package_data.dat'],
+        # PEP 561 compatibility (type hints, mypy)
+        "{{ app.name.package }}": ["py.typed"]
+        # other package data
+        # '{{ app.name.package}}': ['package_data.dat'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may

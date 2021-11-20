@@ -141,6 +141,7 @@ class ComposoPythonPlugin:
 
         # SRC
         self.__sys_interface.write(package_path / "__init__.py", "")
+        self.__sys_interface.write(package_path / "py.typed")
         if "flavour" in config["app"]:
             if "standalone" in config["app"]["flavour"] or "plugin" in config["app"]["flavour"]:
                 self.__sys_interface.write(package_path / "ioc.py", template_renderer.render("ioc.py"))
