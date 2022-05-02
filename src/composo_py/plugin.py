@@ -135,13 +135,14 @@ class ComposoPythonPlugin:
         self.__sys_interface.write(proj_path / "pyproject.toml", pyproject_toml.content)
         manifest_in = self.__verse("manifest_in")
         self.__sys_interface.write(proj_path / "MANIFEST.in", manifest_in.content)
+        self.__sys_interface.write(proj_path / "requirements.txt", template_renderer.render("requirements.txt"))
 
         # TESTS
         self.__sys_interface.write(tests_path / "__init__.py", "")
 
         # SRC
         self.__sys_interface.write(package_path / "__init__.py", "")
-        self.__sys_interface.write(package_path / "py.typed")
+        self.__sys_interface.write(package_path / "py.typed", "")
         if "flavour" in config["app"]:
             if "standalone" in config["app"]["flavour"] or "plugin" in config["app"]["flavour"]:
                 self.__sys_interface.write(package_path / "ioc.py", template_renderer.render("ioc.py"))
